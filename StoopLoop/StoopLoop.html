@@ -1,0 +1,257 @@
+<!-- Copyright (c) 2020 Yuki Tanida
+This software is released under the MIT License, see ../LICENSE -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>StoopLoop</title>
+    <meta charset="utf-8">
+    <script src="./jspsych/jspsych.js"></script>
+    <script src="./jspsych/plugins/jspsych-html-keyboard-response.js"></script>
+    <link rel="stylesheet" href="./jspsych/css/jspsych.css">
+  </head>
+  <body>
+  </body>
+  <script>
+  //============================================================================
+  // 授業用のストループデモ。文字が表示されつづける。
+  // 文字を読むかのをL条件、インクの色をいってもらうのをI条件とする。
+  // 第一試行はL条件。提示時間は1000ms。
+
+  // 刺激の提示中にキーを押すと、キーに対応した条件や提示時間の変更が生じる。この変更は、新たに変更キーが押されるまで持続される。
+  // L: 次の試行からL条件に。
+  // I: 次の試行からI条件に。
+  // C: 次の試行から色名とインク色が必ず一致するL条件に（Congruent試行）
+  // E: 次の試行から色名とインク名が必ず異なるI条件に（ErrorProne試行）
+  // 1: 次の試行から提示時間を500msに変更。
+  // 2: 次の試行から提示時間を700msに変更。
+  // 3: 次の試行から提示時間を900msに変更。
+  // 4: 次の試行から提示時間を1100msに変更。
+  // 5: 次の試行から提示時間を1300msに変更。
+  // 6: 次の試行から提示時間を1500msに変更。
+  // 7: 次の試行から提示時間を1700msに変更。
+  // 8: 次の試行から提示時間を1900msに変更。
+  // 9: 次の試行から提示時間を2100msに変更。
+  // 0: 次の試行から提示時間を2300msに変更。
+
+  // 使用する色は赤・青・黄・緑の４色。L条件とI条件では、色名とインク色がこれら４色から完全にランダムに選ばれる。
+  // そのため、赤+赤のような組み合わせも出てくる。
+  // Congruent試行とErrorProne試行では、色名とインク色が制御される。
+
+  // 次の試行の条件（L条件 or I条件）が前の試行と異なるときのみ教示が提示される。
+  // 現在の試行の条件と提示時間がconsole.log()で表示される。
+  // javascriptコンソールをブラウザ画面の左部分に表示し、
+  // それ以外の画面をスクリーン２へ移動した状態にすると、学生には教示・刺激のみが見え、
+  // 教員はコンソールで提示時間を確認できる。
+
+  // 授業では刺激に対して優勢な反応を抑制する際のコストを実感してもらうための実験デモに使う
+  // 1: L条件で手慣らしをしたあと、I条件に切り替える。余裕があるなら、提示時間を長くしたり短くしたりする。
+  // 2: L条件に再び切り替えると、長期的連合の機能（刺激に対して優勢な反応）と抑制機能について実感をもって理解できる。
+  // 3: L条件やI条件をきりかえて、感覚がつかめてきたら、C試行（色名とインク色が一致する「文字を読め」条件）に移行する。
+  // 4: C試行で提示時間を徐々に短くする。
+  // 5: 被験者のモードが完全に文字読みモードへときりかわった頃を見計らい、E条件に切り替えると全員ひっかかる。
+
+  //============================================================================
+
+  // Font size = 1/4 * height of screen resolution in pixel
+	var width_screen = window.screen.width;
+	var height_screen = window.screen.height;
+	var fontSizePx = height_screen * 1/4;
+
+	// instruction message
+	const letterInst = "文字を読んでください";
+	const inkInst = "インクの色を言ってください";
+
+	// stimulus list
+	const letters = ['赤', '青', '黃', '緑'];
+	const inks = ['red', 'blue', 'yellow', 'forestgreen'];
+	const ids = [0, 1, 2, 3];
+
+	// Default values
+	var instruction = letterInst;
+	var update = 0;
+	var congruent = 0;
+	var errorProne = 0;
+	var condition = 'l';
+  var msTrial = 1500;
+
+  // PREPARE PHASES ============================================================
+  var instructionPhase = {
+    type: 'html-keyboard-response',
+    stimulus: function(){
+      if (condition == 'l' ){
+        instruction = letterInst
+      }
+      if (condition == 'i' ){
+        instruction = inkInst
+      }
+      document.bgColor = "#AAAAAA";
+      var html = "<div style='font-weight:bold; font-size:52px; color:black; text-align:centor;'>" + instruction + "</div>";
+      return html;
+    },
+    trial_duration: 1200,
+		stimulus_duration: 1000,
+		response_ends_trial: false,
+  }
+
+  // loop trial ----------------------------------------------------------------
+  var trial = {
+    type: 'html-keyboard-response',
+    stimulus: function (){
+      var inks_suffled = jsPsych.randomization.shuffle(inks);
+			var letters_suffled = jsPsych.randomization.shuffle(letters);
+			var ids_suffled = jsPsych.randomization.shuffle(ids);
+      console.log('duration =', msTrial);
+			if ( congruent == 0 && errorProne == 0 ){
+				ink_stim = inks_suffled[0];
+				letter_stim = letters_suffled[0];
+			}
+			if ( congruent == 1 ){
+				ink_stim = inks[ids_suffled[0]];
+				letter_stim = letters[ids_suffled[0]];
+        console.log('congruent');
+			}
+			if ( errorProne == 1 ){
+				ink_stim = inks[ids_suffled[0]];
+				letter_stim = letters[ids_suffled[1]];
+        console.log('error prone');
+      }
+      document.bgColor = "#AAAAAA";
+
+      var html = "<div style='font-size:" + fontSizePx + "px; color:" + ink_stim + ";"+
+                 "text-align:centor;'>"+
+								 letter_stim + "</div>";
+			return html;
+    },
+    choices: ['l','i', 'c', 'e', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ],
+    trial_duration: function (){return msTrial},
+		stimulus_duration: function (){return msTrial},
+		response_ends_trial: false,
+    on_finish: function(data) {
+      var data = jsPsych.data.get().last(1).values()[0];
+
+      // If not pressed any keys
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('null')){
+        update = 0
+      }
+
+      // If press L
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('l')){
+        if (condition == 'l'){
+          update = 0
+        }
+        if (condition == 'i'){
+          update = 1
+        }
+        congruent = 0
+        errorProne = 0
+        condition = 'l'
+      }
+
+      // If press I
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('i')){
+        if (condition == 'l'){
+          update = 1
+        }
+        if (condition == 'i'){
+          update = 0
+        }
+        congruent = 0
+        errorProne = 0
+        condition = 'i'
+      }
+
+      // If press C
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('c')){
+        if (condition == 'l'){
+          update = 0
+        }
+        if (condition == 'i'){
+          update = 1
+        }
+        congruent = 1
+        errorProne = 0
+        condition = 'l'
+      }
+
+      // If press C
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('e')){
+        if (condition == 'l'){
+          update = 1
+        }
+        if (condition == 'i'){
+          update = 0
+        }
+        congruent = 0
+        errorProne = 1
+        condition = 'i'
+      }
+
+      // To manipulate duration of stimulus presentation
+      // If press C
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('1')){
+        msTrial = 500;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('2')){
+        msTrial = 700;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('3')){
+        msTrial = 900;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('4')){
+        msTrial = 1100;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('5')){
+        msTrial = 1300;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('6')){
+        msTrial = 1500;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('7')){
+        msTrial = 1700;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('8')){
+        msTrial = 1900;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('9')){
+        msTrial = 2100;
+      }
+      if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('0')){
+        msTrial = 2300;
+      }
+      console.log('duration =', msTrial);
+      console.log('condition=', condition);
+      console.log('congruent=', congruent);
+      console.log('errorPron=', errorProne);
+    }
+  }
+
+  var loop_node = {
+    timeline: [trial],
+    loop_function: function(data){
+      if(update == 0){
+        return true;
+      }
+      if(update == 1){
+        return false;
+      }
+    }
+  }
+
+
+  // Higher order loop ---------------------------------------------------------
+  var loop_node_high = {
+    timeline: [instructionPhase, loop_node],
+    loop_function: function(){
+      return true;
+    }
+  }
+
+  // Initialise time line
+  jsPsych.init({
+    timeline: [loop_node_high],
+    on_finish: function(){ jsPsych.data.displayData(); },
+    default_iti: 200
+  });
+
+  </script>
+</html>

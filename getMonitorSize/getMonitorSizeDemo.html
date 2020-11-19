@@ -1,0 +1,114 @@
+<!-- Copyright (c) 2020 Yuki Tanida
+This software is released under the MIT License, see ../LICENSE -->
+<!-- This demo calculates ppi (pixel per inch) to control pysical size of stimulus. Before this demo runs, you need to know your monitor inch size. When you submit the monitor size at the 2nd page of this demo, size of a rectangle changes depending on submitted monitor size. If correct monitor size submitted, the rectangle is drawn in 3cm square and 5cm high. Check it by measuring sides of the drawn rectangle with your own ruler. At the final page, a letter "あ" is depicted in 1cm x 1cm. (by Yuki Tanida https://twitter.com/yukitanida)-->
+
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>getMonitorSizeDemo</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
+		<style>
+		  div {
+				font-family: 'Osaka-mono', 'Osaka−等幅', 'MS Gothic', 'ＭＳ ゴシック', monospace, sans-serif;
+		  }
+		</style>
+
+		<!-- Prepare jsPsych plugin ----------------------------------------------->
+		<script src="./jspsych/jspsych.js"></script>
+		<script src="./jspsych/plugins/jspsych-fullscreen.js"></script>
+		<script src="./jspsych/plugins/jspsych-instructions.js"></script>
+		<script src="./jspsych/plugins/jspsych-html-keyboard-response.js"></script>
+		<link href="./jspsych/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+
+		<!-- Prepare function for physical monitor size and cal ppi --------------->
+		<script src="./getMonitorSize.js"></script>
+
+		<!-- Preparation ---------------------------------------------------------->
+		<script>
+		  // physical size (cm) for a letter
+		  var cmPerLetter = 1;
+
+			// variable for font size in pixel to be calculated later
+			var fontSizePx = 0;
+	  </script>
+
+	</head>
+	<body></body>
+
+	<script>
+	  var timeline = [];
+
+		// full screen
+		var fullscreen = {
+			type: 'fullscreen',
+			message: "<div style='text-align:left; padding:20px; font-size:28px; line-height:200%;'>" +
+			'これは物理モニタのサイズを被験者に入力してもらうことで、ppiを計算し、刺激の物理サイズ（cm）を制御するデモです。' +
+			'まず、ブラウザを全画面表示にする必要があります。下のボタンをクリックし、ブラウザを全画面表示に切り替えて下さい。<br<br><br></div>',
+			button_label: "全画面表示に切り替え",
+			fullscreen_mode: true,
+		};
+		timeline.push(fullscreen);
+
+		// Get physical screen size and calculate ppi
+		var getDisplay = {
+			type: "instructions",
+			pages: function(){
+					canvasWidth = window.innerWidth*0.5;   // grobal
+					canvasHeight = window.innerHeight*0.5; // grobal
+
+					var html = [
+					"<div>" +
+						"<div style='text-align:left; padding:7px; font-size:18px; line-height:200%;'>" +
+							"適切な画面表示のため、お使いのディスプレイのサイズを知る必要があります。PCのシステム設定画面で確認したディスプレイのインチ数を入力フォームに半角数字でご入力下さい。数字を入力いただくと黒い長方形があらわれます。値によって黒い長方形のサイズが変化しますので、縦３ｃｍ、横５ｃｍで表示されているかどうかを定規でご確認いただくようお願い申し上げます。なお、まれにPCの設定画面に表示されたインチ数を入力いただいた場合でも、縦３ｃｍ、横５ｃｍの長方形にならないことがございます。その際は、小数第一位まで数値を操作いただき（例えば13インチMacbook Proの場合は13.3）、縦３ｃｍ、横５ｃｍの長方形になるように調整していただきますようお願いいたします。"+
+						"</div>" +
+
+						"<div style='text-align:left; font-size:x-large; padding:7px;'><b>インチ数を入力して下さい：<input id='area1' type='text' name=''モニターサイズ' value='' size='10' onkeyup='getMonitorSize();'></b></div>"+
+
+						"<div style='align:center; padding:7px; '><canvas id='canvas' width='" + canvasWidth + "' height='" + canvasHeight + "'></canvas></div>" +
+					"</div>"];
+
+					return html;
+			},
+			key_forward: false,
+			key_backward: false,
+			allow_backward: false,
+			allow_keys: false,
+			show_clickable_nav: true,
+			button_label_next: ["縦３ｃｍ、横５ｃｍの長方形が表示されたので次に進む"],
+			on_finish: function(data){
+				console.log('monitor size:', size);
+				console.log('ppi:', ppi);
+			},
+		};
+		timeline.push(getDisplay);
+
+
+		// Draw a letter (あ) in 1cm x 1cm
+		var stimulus = {
+			type: "html-keyboard-response",
+			stimulus:  function(){
+				var html = "<div><span style='text-align:centor;"+
+				                       "font-size:" + fontSizePx + "px; "+
+															 "background-color:#00ff00;'>"+
+															 "あ</span><br><br>"+
+									"<span>文字「あ」が縦１cm横1cmで表示されているはずです。何らかのキーを押せば終了します。</span></div>";
+				return html;
+			},
+		};
+		timeline.push(stimulus);
+
+		// exit fullscreen mode
+		timeline.push({
+			type: 'fullscreen',
+			fullscreen_mode: false
+		});
+
+		// Initiate presentation
+		jsPsych.init({
+			timeline: timeline,
+		});
+
+	</script>
+</html>
